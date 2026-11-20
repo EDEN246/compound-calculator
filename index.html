@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3186ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حاسبة أرقام خيالية</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#faf9f9;--card:#fff;--tx:#1f1f1f;--mut:#5f6368;--line:#e3e3e3;--p:#3186ff;--g:#0ebc5f;--chip:#f2f0f0}
+@media(prefers-color-scheme:dark){:root{--bg:#0f0f0f;--card:#1a1a1a;--tx:#fff;--mut:#ababab;--line:#2d2f38;--p:#9dd2ff;--g:#60d673;--chip:#262626}}
+*{box-sizing:border-box;margin:0}
+body{font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.6;padding:16px}
+.w{max-width:720px;margin:0 auto;display:grid;gap:14px}
+h1{font-size:20px;font-weight:700}
+h2{font-size:15px;font-weight:700;margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.n{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.mut{color:var(--mut);font-size:13px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.sum b{display:block;font-size:clamp(15px,4.6vw,22px);font-weight:500}
+.sum span.l{font-size:12px;color:var(--mut)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--chip);border-radius:8px;padding:2px}
+.seg button{border:0;background:none;color:var(--tx);font:inherit;font-size:13px;padding:4px 12px;border-radius:6px;cursor:pointer}
+.seg button.on{background:var(--card);box-shadow:0 0 0 1px var(--line);font-weight:700}
+.sr{margin-top:12px}
+.lbl{font-size:13px;color:var(--mut)}
+.ctl{display:flex;gap:10px;align-items:center}
+.ctl input[type=range]{flex:1;accent-color:var(--p);min-width:0}
+.tv{width:88px;text-align:center;direction:ltr;font:inherit;font-size:14px;padding:5px;border:1px solid var(--line);border-radius:8px;background:var(--chip);color:var(--tx)}
+#ch{margin-top:10px}
+svg{display:block;touch-action:pan-y}
+svg text{fill:var(--mut);font-size:12px;font-family:inherit}
+#ro{min-height:44px;font-size:14px;margin-top:6px}
+.lg{display:flex;gap:14px;font-size:13px;color:var(--mut);margin-top:6px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:5px}
+.kv{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border:0}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:6px 4px;text-align:start;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mut);font-weight:500}
+#reset{font:inherit;font-size:13px;color:var(--tx);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="w">
+  <h1>حاسبة النمو الأُسي والربح المركّب</h1>
+
+  <div class="card">
+    <div class="sum" id="sum"></div>
+    <p class="mut" id="dur" style="text-align:center;margin-top:8px"></p>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="lbl">وحدة المدة</span>
+      <div class="seg" data-k="unit"><button data-v="days">أيام</button><button data-v="years">سنين</button></div>
+    </div>
+    <div id="sl"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div><span class="lbl">المقياس </span>
+        <div class="seg" data-k="log"><button data-v="0">عادي</button><button data-v="1">لوغاريتمي</button></div></div>
+      <div><span class="lbl">المجموع على الرسم </span>
+        <div class="seg" data-k="sum"><button data-v="0">إخفاء</button><button data-v="1">إظهار</button></div></div>
+    </div>
+    <div id="ch"><svg id="svg" dir="ltr"></svg></div>
+    <div class="lg" id="lg"></div>
+    <div id="ro"></div>
+  </div>
+
+  <div class="card">
+    <h2>متى أوصل هدفي؟</h2>
+    <div class="ctl"><span class="lbl" style="white-space:nowrap">الهدف ($)</span>
+      <input type="text" class="tv" id="target" inputmode="decimal" style="flex:1;text-align:start"></div>
+    <div id="goal" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>محطات على الطريق</h2>
+    <div class="tw"><table><thead><tr><th>بعد</th><th>دخل اليوم</th><th>مجموع الدخل</th></tr></thead><tbody id="ms"></tbody></table></div>
+  </div>
+
+  <div class="row">
+    <p class="mut">اليوم 0 هو مبلغ البداية، والمجموع يشمل اليوم 0. السنة = 365 يوم. القيم تُحفظ تلقائياً في المتصفح.</p>
+    <button id="reset">إعادة ضبط</button>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY='fantasyCalcV1';
+const DEF={initial:0.25,rate:2.5,dur:100,unit:'days',target:1000,log:'0',sum:'0'};
+let S={...DEF};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+['initial','rate','dur','target'].forEach(k=>{if(typeof S[k]!=='number'||!isFinite(S[k]))S[k]=DEF[k]});
+if(S.unit!=='years')S.unit='days';
+
+// ---------- أدوات ----------
+const AR='٠١٢٣٤٥٦٧٨٩';
+function num(s){
+  s=String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d)).replace(/٫/g,'.').replace(/[,،٬]/g,'').replace(/[^0-9.]/g,'');
+  const v=parseFloat(s);return isNaN(v)?0:v;
+}
+const L=x=>Math.round(x).toLocaleString('en-US');
+function f(n){
+  if(!isFinite(n))return'∞';
+  if(n<100)return'$'+n.toFixed(2);
+  if(n<1e6)return'$'+L(n);
+  if(n>=1e18)return'$'+n.toExponential(2).replace('e+','×10^');
+  for(const [s,v] of [['Q',1e15],['T',1e12],['B',1e9],['M',1e6]])if(n>=v)return'$'+(n/v).toFixed(1)+s;
+}
+const fd=d=>d>36500?'أكثر من 100 سنة':d<=365?L(d)+' يوم':(+(d/365).toFixed(1))+' سنة ('+L(d)+' يوم)';
+const fs=d=>d>=365&&d%365===0?(d/365)+' سنة':L(d)+' يوم';
+const xl=d=>S.unit==='years'?String(+(d/365).toFixed(1)):String(Math.round(d));
+function nice(m){if(m<=0)return 1;const g=Math.pow(10,Math.floor(Math.log10(m))),r=m/g;return(r<=1?1:r<=2?2:r<=5?5:10)*g}
+
+// ---------- الحساب ----------
+let a,r,g,N;
+function calc(){
+  a=Math.max(S.initial,1e-4);r=Math.max(S.rate,0)/100;g=1+r;
+  N=Math.min(36500,Math.max(1,Math.round(S.unit==='years'?S.dur*365:S.dur)));
+}
+const cl=v=>Math.min(v,1e300);
+const val=d=>cl(a*Math.pow(g,d));
+const cum=d=>cl(r>0?a*(Math.pow(g,d+1)-1)/r:a*(d+1));
+function dayFor(T,total){
+  const L2=Math.log(g);
+  const d=total?Math.ceil(Math.log(T*r/a+1)/L2)-1:Math.ceil(Math.log(T/a)/L2);
+  return Math.max(0,d);
+}
+
+// ---------- المؤشرات ----------
+function defs(){const y=S.unit==='years';return[
+  {k:'initial',l:'مبلغ البداية ($)',min:0.01,max:10,step:0.01},
+  {k:'rate',l:'النسبة اليومية (%)',min:0.01,max:10,step:0.01},
+  {k:'dur',l:y?'المدة (سنين)':'المدة (أيام)',min:y?0.5:1,max:y?10:365,step:y?0.5:1}];}
+function build(){
+  const box=$('sl');box.innerHTML='';
+  defs().forEach(d=>{
+    const row=document.createElement('div');row.className='sr';
+    row.innerHTML='<div class="lbl">'+d.l+'</div><div class="ctl"><input type="range" dir="ltr"><input type="text" class="tv" inputmode="decimal"></div>';
+    const [rg,tx]=row.querySelectorAll('input');
+    rg.min=d.min;rg.step=d.step;
+    const fit=()=>{rg.max=S[d.k]>d.max?S[d.k]*1.25:d.max;rg.value=S[d.k]};
+    fit();tx.value=S[d.k];
+    rg.oninput=()=>{S[d.k]=parseFloat(rg.value);tx.value=S[d.k];render()};
+    tx.oninput=()=>{S[d.k]=num(tx.value);fit();render()};
+    tx.onblur=()=>{tx.value=S[d.k]};
+    box.appendChild(row);
+  });
+}
+
+// ---------- الرسم ----------
+let V=null;
+function draw(){
+  const W=Math.max(280,$('ch').clientWidth),H=Math.round(Math.min(320,W*0.62));
+  const P={t:12,r:10,b:26,l:58},pw=W-P.l-P.r,ph=H-P.t-P.b;
+  const M=Math.min(N,300),xs=[],A=[],C=[];
+  for(let i=0;i<=M;i++){const d=Math.round(i*N/M);xs.push(d);A.push(val(d));C.push(cum(d))}
+  const showSum=S.sum==='1';
+  const all=showSum?A.concat(C):A,hi=Math.max(...all),lo=Math.min(...all);
+  let yf,ticks=[];
+  if(S.log==='1'){
+    let e0=Math.floor(Math.log10(lo)),e1=Math.ceil(Math.log10(hi));
+    if(e1<=e0)e1=e0+1;
+    const st=Math.ceil((e1-e0)/6);e1=e0+Math.ceil((e1-e0)/st)*st;
+    for(let e=e0;e<=e1;e+=st)ticks.push(Math.pow(10,e));
+    yf=v=>(Math.log10(Math.max(v,1e-300))-e0)/(e1-e0);
+  }else{
+    const m=nice(hi);for(let i=0;i<=5;i++)ticks.push(m*i/5);yf=v=>v/m;
+  }
+  const X=d=>P.l+d/N*pw,Y=v=>P.t+ph*(1-yf(v)),Y0=P.t+ph;
+  let s='';
+  ticks.forEach(t=>{const y=Y(t);
+    s+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/>';
+    s+='<text x="'+(P.l-6)+'" y="'+(y+4)+'" text-anchor="end">'+f(t)+'</text>';});
+  for(let k=0;k<=4;k++){const d=N*k/4;
+    s+='<text x="'+X(d)+'" y="'+(H-8)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+xl(d)+'</text>';}
+  const path=arr=>arr.map((v,i)=>(i?'L':'M')+X(xs[i]).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+  s+='<path d="'+path(A)+'L'+X(N)+' '+Y0+'L'+X(0)+' '+Y0+'Z" fill="var(--p)" opacity=".15"/>';
+  s+='<path d="'+path(A)+'" fill="none" stroke="var(--p)" stroke-width="2.5" stroke-linejoin="round"/>';
+  if(showSum)s+='<path d="'+path(C)+'" fill="none" stroke="var(--g)" stroke-width="2.5" stroke-linejoin="round"/>';
+  s+='<line id="hl" y1="'+P.t+'" y2="'+Y0+'" stroke="var(--mut)" stroke-dasharray="3 3" opacity="0"/>';
+  s+='<circle id="d0" r="4.5" fill="var(--p)" opacity="0"/>';
+  if(showSum)s+='<circle id="d1" r="4.5" fill="var(--g)" opacity="0"/>';
+  const svg=$('svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.innerHTML=s;
+  V={xs,A,C,X,Y,M,P,pw,showSum};
+  $('lg').innerHTML='<span><i style="background:var(--p)"></i>دخل اليوم</span>'+(showSum?'<span><i style="background:var(--g)"></i>مجموع الدخل</span>':'');
+  idle();
+}
+function idle(){$('ro').innerHTML='<span class="mut">المس المنحنى أو مرّر عليه لرؤية القيم.</span>'}
+function hover(e){
+  if(!V)return;
+  const rc=$('svg').getBoundingClientRect();
+  let i=Math.round((e.clientX-rc.left-V.P.l)/V.pw*V.M);
+  i=Math.max(0,Math.min(V.M,i));
+  const d=V.xs[i],x=V.X(d);
+  const hl=$('hl');hl.setAttribute('x1',x);hl.setAttribute('x2',x);hl.setAttribute('opacity','1');
+  const d0=$('d0');d0.setAttribute('cx',x);d0.setAttribute('cy',V.Y(V.A[i]));d0.setAttribute('opacity','1');
+  let t='بعد <b>'+fs(d)+'</b>: دخل اليوم <span class="n">'+f(V.A[i])+'</span>';
+  if(V.showSum){const d1=$('d1');d1.setAttribute('cx',x);d1.setAttribute('cy',V.Y(V.C[i]));d1.setAttribute('opacity','1');
+    t+='، المجموع <span class="n">'+f(V.C[i])+'</span>';}
+  $('ro').innerHTML=t;
+}
+$('svg').addEventListener('pointerdown',hover);
+$('svg').addEventListener('pointermove',hover);
+$('svg').addEventListener('pointerleave',()=>{
+  ['hl','d0','d1'].forEach(id=>{const el=$(id);if(el)el.setAttribute('opacity','0')});idle();});
+window.addEventListener('resize',()=>{if(V)draw()});
+
+// ---------- العرض ----------
+function render(){
+  calc();
+  $('sum').innerHTML=[['مبلغ البداية',a],['دخل اليوم الأخير',val(N)],['مجموع الدخل',cum(N)]]
+    .map(([l,v])=>'<div><b><span class="n">'+f(v)+'</span></b><span class="l">'+l+'</span></div>').join('');
+  $('dur').textContent='مدة المحاكاة: '+fd(N);
+  document.querySelectorAll('.seg').forEach(sg=>sg.querySelectorAll('button').forEach(b=>
+    b.classList.toggle('on',S[sg.dataset.k]===b.dataset.v)));
+
+  const T=S.target,ok=T>0&&r>0;
+  const row=(l,v)=>'<div class="kv"><span>'+l+'</span><b>'+v+'</b></div>';
+  $('goal').innerHTML=
+    row('دخل اليوم يوصل هدفك بعد',ok?fd(dayFor(T,false)):'—')+
+    row('مجموع الدخل يوصل هدفك بعد',ok?fd(dayFor(T,true)):'—')+
+    row('مبلغك يتضاعف كل',r>0?(Math.log(2)/Math.log(g)).toFixed(1)+' يوم':'—');
+
+  const base=S.unit==='years'?[365,730,1825,3650]:[7,30,90,180,365];
+  const ms=base.filter(d=>d<=N);if(!ms.includes(N))ms.push(N);
+  $('ms').innerHTML=ms.map(d=>'<tr><td>'+fs(d)+'</td><td><span class="n">'+f(val(d))+'</span></td><td><span class="n">'+f(cum(d))+'</span></td></tr>').join('');
+
+  draw();
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+}
+
+// ---------- الأزرار ----------
+document.querySelectorAll('.seg').forEach(sg=>{
+  sg.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const k=sg.dataset.k,v=b.dataset.v;
+    if(k==='unit'&&v!==S.unit){
+      S.dur=v==='years'?Math.max(0.5,Math.round(S.dur/365*2)/2):Math.round(S.dur*365);
+      S.unit=v;build();
+    }else S[k]=v;
+    render();
+  };
+});
+$('target').value=S.target;
+$('target').oninput=()=>{S.target=num($('target').value);render()};
+$('target').onblur=()=>{$('target').value=S.target};
+$('reset').onclick=()=>{
+  S={...DEF};try{localStorage.removeItem(KEY)}catch(e){}
+  $('target').value=S.target;build();render();
+};
+
+build();render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
